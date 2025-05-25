@@ -16,7 +16,8 @@ const CurrencySettings: React.FC<CurrencySettingsProps> = ({
   onUpdateExchangeRate,
   onChangeDisplayCurrency
 }) => {
-  const [newRate, setNewRate] = useState(exchangeRate.toString());
+  const safeExchangeRate = typeof exchangeRate === 'number' ? exchangeRate : 34.50;
+  const [newRate, setNewRate] = useState(safeExchangeRate.toString());
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSaveRate = () => {
@@ -28,7 +29,7 @@ const CurrencySettings: React.FC<CurrencySettingsProps> = ({
   };
 
   const handleCancel = () => {
-    setNewRate(exchangeRate.toString());
+    setNewRate(safeExchangeRate.toString());
     setIsEditing(false);
   };
 
@@ -64,7 +65,7 @@ const CurrencySettings: React.FC<CurrencySettingsProps> = ({
             ) : (
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-primary-600">
-                  {exchangeRate.toFixed(2)} ₺
+                  {safeExchangeRate.toFixed(2)} ₺
                 </span>
                 <button
                   onClick={() => setIsEditing(true)}

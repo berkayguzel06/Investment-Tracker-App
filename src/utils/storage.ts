@@ -1,3 +1,4 @@
+import { apiService } from '../services/api';
 import { AppState, Asset, Currency, Portfolio, Sale } from '../types';
 
 const STORAGE_KEY = 'investment-tracker-data';
@@ -17,12 +18,55 @@ export const defaultAppState: AppState = {
   }
 };
 
-export const loadAppState = (): AppState => {
+// Backend'den veri yükleme
+export const loadAppState = async (): Promise<AppState> => {
+  try {
+    // Backend'den portfolyoları ve ayarları çek
+    const [portfolios, settings] = await Promise.all([
+      apiService.getPortfolios(),
+      apiService.getSettings().catch(() => null)
+    ]);
+
+    // LocalStorage'dan aktif portfolyo ID'sini al
+    const localData = localStorage.getItem(STORAGE_KEY);
+    let activePortfolioId = null;
+    
+    if (localData) {
+      try {
+        const parsed = JSON.parse(localData);
+        activePortfolioId = parsed.activePortfolioId;
+      } catch (error) {
+        console.error('LocalStorage verisi okunamadı:', error);
+      }
+    }
+
+    return {
+      portfolios: portfolios || [],
+      activePortfolioId,
+      settings: settings ? {
+        currency: settings.currency || 'TRY',
+        language: settings.language || 'tr',
+        theme: settings.theme || 'light',
+        exchangeRates: {
+          USD_TO_TRY: settings.usd_to_try_rate || 34.50,
+          lastUpdated: settings.exchange_rate_updated || new Date().toISOString()
+        },
+        displayCurrency: settings.display_currency || 'TRY'
+      } : defaultAppState.settings
+    };
+  } catch (error) {
+    console.error('Backend\'den veri yüklenirken hata:', error);
+    // Fallback olarak localStorage'dan yükle
+    return loadAppStateFromLocalStorage();
+  }
+};
+
+// LocalStorage'dan veri yükleme (fallback)
+export const loadAppStateFromLocalStorage = (): AppState => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Eski veriler için varsayılan değerleri ekle
       return { 
         ...defaultAppState, 
         ...parsed,
@@ -33,14 +77,19 @@ export const loadAppState = (): AppState => {
       };
     }
   } catch (error) {
-    console.error('Veri yüklenirken hata:', error);
+    console.error('LocalStorage\'dan veri yüklenirken hata:', error);
   }
   return defaultAppState;
 };
 
+// Sadece aktif portfolyo ID'sini localStorage'a kaydet
 export const saveAppState = (state: AppState): void => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // Sadece aktif portfolyo ID'sini localStorage'a kaydet
+    const dataToSave = {
+      activePortfolioId: state.activePortfolioId
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   } catch (error) {
     console.error('Veri kaydedilirken hata:', error);
   }
@@ -60,18 +109,19 @@ export const importData = (jsonData: string): AppState => {
   }
 };
 
-export const createPortfolio = (name: string, description?: string): Portfolio => {
-  return {
-    id: generateId(),
-    name,
-    description,
-    createdAt: new Date().toISOString(),
-    assets: [],
-    sales: []
-  };
+// Backend API kullanarak portfolyo oluşturma
+export const createPortfolio = async (name: string, description?: string): Promise<Portfolio> => {
+  try {
+    return await apiService.createPortfolio({ name, description });
+  } catch (error) {
+    console.error('Portfolyo oluşturulurken hata:', error);
+    throw error;
+  }
 };
 
-export const createAsset = (
+// Backend API kullanarak varlık oluşturma
+export const createAsset = async (
+  portfolioId: string,
   name: string,
   category: any,
   amount: number,
@@ -79,36 +129,46 @@ export const createAsset = (
   purchaseDate: string,
   currency: Currency,
   notes?: string
-): Asset => {
-  return {
-    id: generateId(),
-    name,
-    category,
-    amount,
-    purchasePrice,
-    purchaseDate,
-    currency,
-    notes
-  };
+): Promise<Asset> => {
+  try {
+    return await apiService.createAsset({
+      portfolio_id: portfolioId,
+      name,
+      category,
+      amount,
+      purchase_price: purchasePrice,
+      purchase_date: purchaseDate,
+      currency,
+      notes
+    });
+  } catch (error) {
+    console.error('Varlık oluşturulurken hata:', error);
+    throw error;
+  }
 };
 
-export const createSale = (
+// Backend API kullanarak satış oluşturma
+export const createSale = async (
   assetId: string,
   amount: number,
   salePrice: number,
   saleDate: string,
   currency: Currency,
   notes?: string
-): Sale => {
-  return {
-    id: generateId(),
-    assetId,
-    amount,
-    salePrice,
-    saleDate,
-    currency,
-    notes
-  };
+): Promise<Sale> => {
+  try {
+    return await apiService.createSale({
+      asset_id: assetId,
+      amount,
+      sale_price: salePrice,
+      sale_date: saleDate,
+      currency,
+      notes
+    });
+  } catch (error) {
+    console.error('Satış oluşturulurken hata:', error);
+    throw error;
+  }
 };
 
 const generateId = (): string => {

@@ -35,45 +35,88 @@ A modern and user-friendly investment portfolio tracking application. Developed 
 ## 🛠️ Technologies
 
 * **Frontend:** React 18, TypeScript
+* **Backend:** Node.js, Express.js
+* **Database:** PostgreSQL
 * **Desktop:** Electron
 * **UI Framework:** Tailwind CSS
 * **Charts:** Chart.js
-* **Data:** Local Storage
+* **ORM:** Knex.js
 
 ## 📦 Installation
 
 ### Requirements
 
 * Node.js 16 or above
+* PostgreSQL 12 or above
 * npm or yarn
 
 ### Installation Steps
 
-1. **Install dependencies:**
+1. **Install frontend dependencies:**
 
 ```bash
 npm install
 ```
 
-2. **Run in development mode:**
+2. **Install backend dependencies:**
+
+```bash
+npm run install:backend
+```
+
+3. **Setup PostgreSQL database:**
+
+```sql
+CREATE DATABASE investment_tracker;
+```
+
+4. **Configure backend environment:**
+
+```bash
+cd backend
+cp env.example .env
+# Edit .env file with your database credentials
+```
+
+5. **Run database migrations:**
+
+```bash
+npm run migrate
+```
+
+6. **Create .env file for React app (optional):**
+
+```bash
+# Create .env file in root directory
+echo "REACT_APP_API_URL=http://localhost:3001/api" > .env
+```
+
+7. **Run in development mode (starts backend, frontend, and electron):**
 
 ```bash
 npm run dev
 ```
 
-3. **Run only the React app:**
+8. **Alternative: Run components separately:**
 
 ```bash
-npm start
+# Backend only
+npm run dev:backend
+
+# Frontend only
+npm run dev:react
+
+# Electron only
+npm run dev:electron
 ```
 
-4. **Build for production:**
+9. **Build for production:**
 
 ```bash
 npm run build
 ```
 
-5. **Package the Electron app:**
+10. **Package the Electron app:**
 
 ```bash
 npm run electron-pack
@@ -116,21 +159,36 @@ npm run electron-pack
 
 ```
 investment-tracker/
+├── backend/                 # Node.js Backend
+│   ├── src/
+│   │   ├── config/          # Database configuration
+│   │   ├── controllers/     # API controllers
+│   │   ├── models/          # Database models
+│   │   ├── routes/          # API routes
+│   │   ├── types/           # TypeScript types
+│   │   └── server.ts        # Express server
+│   ├── migrations/          # Database migrations
+│   ├── package.json
+│   ├── knexfile.js
+│   └── tsconfig.json
 ├── public/
 │   ├── electron.js          # Main Electron file
 │   └── index.html           # HTML template
-├── src/
+├── src/                     # React Frontend
 │   ├── components/          # React components
 │   │   ├── Analytics.tsx    # Analytics page
 │   │   ├── AssetManager.tsx # Asset management
 │   │   ├── Dashboard.tsx    # Dashboard
 │   │   ├── PortfolioManager.tsx # Portfolio management
 │   │   └── Sidebar.tsx      # Sidebar menu
+│   ├── services/            # API services
+│   │   └── api.ts           # Backend API client
 │   ├── types/               # TypeScript types
 │   │   └── index.ts
 │   ├── utils/               # Utility functions
 │   │   ├── calculations.ts  # Calculation logic
-│   │   └── storage.ts       # Data storage
+│   │   ├── storage.ts       # Data storage
+│   │   └── dataTransform.ts # Data transformation
 │   ├── App.tsx              # Main app component
 │   ├── index.tsx            # Entry point
 │   └── index.css            # Global styles
@@ -216,13 +274,16 @@ interface Sale {
 
 ## 🚀 Upcoming Features
 
+* [X] Node.js backend with PostgreSQL connection
 * [ ] Real-time price updates (API integration)
 * [ ] More detailed charts and analysis tools
 * [ ] Import/export data (CSV, Excel)
 * [ ] Backup and sync options
 * [ ] Mobile app support
-* [ ] Multi-currency support
+* [X] Multi-currency support
 * [ ] Goal setting and alerts
+* [ ] User authentication and authorization
+* [ ] Cloud deployment options
 
 ## 📄 License
 

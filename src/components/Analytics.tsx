@@ -97,7 +97,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ portfolio, displayCurrency, excha
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Varlık Sayısı</p>
-              <p className="text-2xl font-bold text-gray-900">{portfolio.assets.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{portfolio.assets?.length || 0}</p>
             </div>
             <div className="p-3 bg-orange-100 rounded-full">
               <span className="text-orange-600 text-xl">💎</span>
@@ -164,7 +164,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ portfolio, displayCurrency, excha
       <div className="card">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Varlık Bazlı Analiz</h2>
         
-        {portfolio.assets.length > 0 ? (
+        {(portfolio.assets?.length || 0) > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -187,10 +187,12 @@ const Analytics: React.FC<AnalyticsProps> = ({ portfolio, displayCurrency, excha
                 </tr>
               </thead>
               <tbody>
-                {portfolio.assets.map((asset) => {
+                {portfolio.assets?.map((asset) => {
                   // Varlığın kendi para birimindeki değerleri
-                  const currentValueInAssetCurrency = (asset.currentPrice || asset.purchasePrice) * asset.amount;
-                  const originalValueInAssetCurrency = asset.purchasePrice * asset.amount;
+                  const currentPrice = asset.currentPrice || asset.current_price || asset.purchasePrice || asset.purchase_price || 0;
+                  const purchasePrice = asset.purchasePrice || asset.purchase_price || 0;
+                  const currentValueInAssetCurrency = currentPrice * asset.amount;
+                  const originalValueInAssetCurrency = purchasePrice * asset.amount;
                   
                   // Display currency'ye çevrilmiş değerler
                   const currentValue = currentValueInAssetCurrency;
@@ -270,7 +272,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ portfolio, displayCurrency, excha
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Varlık Sayısı:</span>
                     <span className="font-medium">
-                      {portfolio.assets.filter(a => a.category === category).length}
+                      {portfolio.assets?.filter(a => a.category === category).length || 0}
                     </span>
                   </div>
                 </div>
@@ -291,7 +293,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ portfolio, displayCurrency, excha
               {Object.keys(stats.assetDistribution).filter(cat => stats.assetDistribution[cat as keyof typeof stats.assetDistribution].value > 0).length} kategori
             </p>
             <p className="text-sm text-gray-600">
-              {portfolio.assets.length} farklı varlık
+              {portfolio.assets?.length || 0} farklı varlık
             </p>
           </div>
           

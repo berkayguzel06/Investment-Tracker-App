@@ -63,29 +63,36 @@ const AssetManager: React.FC<AssetManagerProps> = ({
     });
   };
 
-  const handleAddAsset = (e: React.FormEvent) => {
+  const handleAddAsset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (assetForm.name && assetForm.amount && assetForm.purchasePrice) {
-      const newAsset = createAsset(
-        assetForm.name,
-        assetForm.category,
-        parseFloat(assetForm.amount),
-        parseFloat(assetForm.purchasePrice),
-        assetForm.purchaseDate,
-        assetForm.currency,
-        assetForm.notes
-      );
-      
-      if (assetForm.currentPrice) {
-        newAsset.currentPrice = parseFloat(assetForm.currentPrice);
+      try {
+        const newAsset = await createAsset(
+          portfolio.id,
+          assetForm.name,
+          assetForm.category,
+          Number(assetForm.amount),
+          Number(assetForm.purchasePrice),
+          assetForm.purchaseDate,
+          assetForm.currency,
+          assetForm.notes
+        );
+        
+        if (assetForm.currentPrice) {
+          // Update current price via API if provided
+          // This would need an API call to update the asset
+        }
+
+        onUpdatePortfolio({
+          assets: [...(portfolio.assets || []), newAsset]
+        });
+
+        resetAssetForm();
+        setShowAddAssetForm(false);
+      } catch (error) {
+        console.error('Varlık eklenirken hata:', error);
+        alert('Varlık eklenirken bir hata oluştu');
       }
-
-      onUpdatePortfolio({
-        assets: [...portfolio.assets, newAsset]
-      });
-
-      resetAssetForm();
-      setShowAddAssetForm(false);
     }
   };
 
@@ -105,7 +112,7 @@ const AssetManager: React.FC<AssetManagerProps> = ({
       };
 
       onUpdatePortfolio({
-        assets: portfolio.assets.map(asset => 
+        assets: (portfolio.assets || []).map(asset => 
           asset.id === editingAsset.id ? updatedAsset : asset
         )
       });
@@ -115,24 +122,29 @@ const AssetManager: React.FC<AssetManagerProps> = ({
     }
   };
 
-  const handleSaleAsset = (e: React.FormEvent) => {
+  const handleSaleAsset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (showSaleForm && saleForm.amount && saleForm.salePrice) {
-      const newSale = createSale(
-        showSaleForm,
-        parseFloat(saleForm.amount),
-        parseFloat(saleForm.salePrice),
-        saleForm.saleDate,
-        saleForm.currency,
-        saleForm.notes
-      );
+      try {
+        const newSale = await createSale(
+          showSaleForm,
+          parseFloat(saleForm.amount),
+          parseFloat(saleForm.salePrice),
+          saleForm.saleDate,
+          saleForm.currency,
+          saleForm.notes
+        );
 
-      onUpdatePortfolio({
-        sales: [...portfolio.sales, newSale]
-      });
+        onUpdatePortfolio({
+          sales: [...(portfolio.sales || []), newSale]
+        });
 
-      resetSaleForm();
-      setShowSaleForm(null);
+        resetSaleForm();
+        setShowSaleForm(null);
+      } catch (error) {
+        console.error('Satış kaydedilirken hata:', error);
+        alert('Satış kaydedilirken bir hata oluştu');
+      }
     }
   };
 
@@ -142,8 +154,8 @@ const AssetManager: React.FC<AssetManagerProps> = ({
       name: asset.name,
       category: asset.category,
       amount: asset.amount.toString(),
-      purchasePrice: asset.purchasePrice.toString(),
-      purchaseDate: asset.purchaseDate,
+      purchasePrice: asset.purchasePrice?.toString() || '',
+      purchaseDate: asset.purchaseDate || '',
       currentPrice: asset.currentPrice?.toString() || '',
       currency: asset.currency,
       notes: asset.notes || ''
@@ -154,8 +166,8 @@ const AssetManager: React.FC<AssetManagerProps> = ({
   const deleteAsset = (assetId: string) => {
     if (window.confirm('Bu varlığı silmek istediğinizden emin misiniz?')) {
       onUpdatePortfolio({
-        assets: portfolio.assets.filter(asset => asset.id !== assetId),
-        sales: portfolio.sales.filter(sale => sale.assetId !== assetId)
+        assets: (portfolio.assets || []).filter(asset => asset.id !== assetId),
+        sales: (portfolio.sales || []).filter(sale => sale.assetId !== assetId)
       });
     }
   };
@@ -163,13 +175,12 @@ const AssetManager: React.FC<AssetManagerProps> = ({
   const deleteSale = (saleId: string) => {
     if (window.confirm('Bu satış kaydını silmek istediğinizden emin misiniz?')) {
       onUpdatePortfolio({
-        sales: portfolio.sales.filter(sale => sale.id !== saleId)
+        sales: (portfolio.sales || []).filter(sale => sale.id !== saleId)
       });
     }
   };
-
   const getSalesForAsset = (assetId: string) => {
-    return portfolio.sales.filter(sale => sale.assetId === assetId);
+    return (portfolio.sales || []).filter(sale => sale.assetId === assetId);
   };
 
   return (
@@ -436,9 +447,8 @@ const AssetManager: React.FC<AssetManagerProps> = ({
           </form>
         </div>
       )}
-
       {/* Assets List */}
-      {portfolio.assets.length > 0 ? (
+      {portfolio && portfolio.assets && portfolio.assets.length > 0 ? (
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Varlıklar</h2>
           
@@ -494,12 +504,12 @@ const AssetManager: React.FC<AssetManagerProps> = ({
                         {asset.amount.toLocaleString('tr-TR')}
                       </td>
                       <td className="py-3 px-4 text-right text-gray-600">
-                        {formatCurrency(asset.purchasePrice, asset.currency)}
+                        {formatCurrency(asset.purchasePrice ?? 0, asset.currency)}
                       </td>
                       <td className="py-3 px-4 text-right text-gray-600">
                         {asset.currentPrice 
                           ? formatCurrency(asset.currentPrice, asset.currency)
-                          : formatCurrency(asset.purchasePrice, asset.currency)
+                          : formatCurrency(asset.purchasePrice ?? 0, asset.currency)
                         }
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-gray-900">
@@ -567,9 +577,8 @@ const AssetManager: React.FC<AssetManagerProps> = ({
           </button>
         </div>
       )}
-
       {/* Sales History */}
-      {portfolio.sales.length > 0 && (
+      {portfolio?.sales && portfolio.sales.length > 0 && (
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Satış Geçmişi</h2>
           
@@ -599,8 +608,8 @@ const AssetManager: React.FC<AssetManagerProps> = ({
               </thead>
               <tbody>
                 {portfolio.sales.map((sale) => {
-                  const asset = portfolio.assets.find(a => a.id === sale.assetId);
-                  const totalInSaleCurrency = sale.amount * sale.salePrice;
+                  const asset = portfolio?.assets?.find(a => a.id === sale.assetId);
+                  const totalInSaleCurrency = sale.amount * (sale.salePrice || 0);
                   
                   return (
                     <tr key={sale.id} className="border-b border-gray-100">
@@ -616,13 +625,13 @@ const AssetManager: React.FC<AssetManagerProps> = ({
                         {sale.amount.toLocaleString('tr-TR')}
                       </td>
                       <td className="py-3 px-4 text-right text-gray-600">
-                        {formatCurrency(sale.salePrice, sale.currency)}
+                        {formatCurrency(sale.salePrice || 0, sale.currency)}
                       </td>
                       <td className="py-3 px-4 text-right font-medium text-gray-900">
-                        {formatCurrency(totalInSaleCurrency, sale.currency)}
+                        {formatCurrency(totalInSaleCurrency || 0, sale.currency)}
                       </td>
                       <td className="py-3 px-4 text-center text-gray-600">
-                        {formatDate(sale.saleDate)}
+                        {formatDate(sale.saleDate || '')}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <button

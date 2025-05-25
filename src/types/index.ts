@@ -3,33 +3,46 @@ export type Currency = 'TRY' | 'USD';
 
 export interface Asset {
   id: string;
+  portfolio_id?: string;
   name: string;
   category: AssetCategory;
   amount: number;
-  purchasePrice: number;
-  purchaseDate: string;
-  currentPrice?: number;
+  purchasePrice?: number; // Backward compatibility
+  purchase_price?: number; // Backend format
+  purchaseDate?: string; // Backward compatibility
+  purchase_date?: string; // Backend format
+  currentPrice?: number; // Backward compatibility
+  current_price?: number; // Backend format
   currency: Currency;
   notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Sale {
   id: string;
-  assetId: string;
+  assetId?: string; // Backward compatibility
+  asset_id?: string; // Backend format
   amount: number;
-  salePrice: number;
-  saleDate: string;
+  salePrice?: number; // Backward compatibility
+  sale_price?: number; // Backend format
+  saleDate?: string; // Backward compatibility
+  sale_date?: string; // Backend format
   currency: Currency;
   notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Portfolio {
   id: string;
   name: string;
   description?: string;
-  createdAt: string;
-  assets: Asset[];
-  sales: Sale[];
+  createdAt?: string; // Backward compatibility
+  created_at?: string; // Backend format
+  updated_at?: string;
+  assets?: Asset[];
+  sales?: Sale[];
 }
 
 export interface AppState {

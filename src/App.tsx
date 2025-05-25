@@ -7,18 +7,39 @@ import PortfolioManager from './components/PortfolioManager';
 import Sidebar from './components/Sidebar';
 import './index.css';
 import { AppState, Currency, Portfolio } from './types';
-import { loadAppState, saveAppState } from './utils/storage';
+import { defaultAppState, loadAppState, saveAppState } from './utils/storage';
 
 type ActiveView = 'dashboard' | 'portfolios' | 'assets' | 'analytics';
 
 function App() {
-  const [appState, setAppState] = useState<AppState>(loadAppState());
+  const [appState, setAppState] = useState<AppState>(defaultAppState);
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Uygulama başlatıldığında veriyi yükle
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const state = await loadAppState();
+        setAppState(state);
+      } catch (error) {
+        console.error('Veri yüklenirken hata:', error);
+        // Hata durumunda default state kullan
+        setAppState(defaultAppState);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   // Durum değiştiğinde kaydet
   useEffect(() => {
-    saveAppState(appState);
-  }, [appState]);
+    if (!isLoading) {
+      saveAppState(appState);
+    }
+  }, [appState, isLoading]);
 
   const currentPortfolio = appState.portfolios.find(p => p.id === appState.activePortfolioId);
 
@@ -132,6 +153,17 @@ function App() {
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">

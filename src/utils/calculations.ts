@@ -16,14 +16,13 @@ export const calculatePortfolioStats = (
     kripto: { value: 0, percentage: 0 },
     kiymetli_maden: { value: 0, percentage: 0 }
   };
-
   // Aktif varlıkları hesapla
-  portfolio.assets.forEach(asset => {
-    const currentPrice = asset.currentPrice || asset.purchasePrice;
+  portfolio.assets?.forEach(asset => {
+    const currentPrice = asset.currentPrice ?? asset.purchasePrice;
     
     // Varlık para birimi ile değerleri hesapla
-    const currentValueInAssetCurrency = currentPrice * asset.amount;
-    const investmentValueInAssetCurrency = asset.purchasePrice * asset.amount;
+    const currentValueInAssetCurrency = (currentPrice ?? 0) * asset.amount;
+    const investmentValueInAssetCurrency = (asset.purchasePrice ?? 0) * asset.amount;
     
     // Display currency'ye çevir
     const currentValue = convertCurrency(
@@ -46,12 +45,11 @@ export const calculatePortfolioStats = (
   });
 
   // Satılan varlıklardan gelen kazançları hesapla
-  portfolio.sales.forEach(sale => {
-    const asset = portfolio.assets.find(a => a.id === sale.assetId);
+  portfolio.sales?.forEach(sale => {
+    const asset = portfolio.assets?.find(a => a.id === sale.assetId);
     if (asset) {
-      const saleValueInSaleCurrency = sale.salePrice * sale.amount;
-      const originalInvestmentInAssetCurrency = asset.purchasePrice * sale.amount;
-      
+      const saleValueInSaleCurrency = (sale.salePrice ?? 0) * sale.amount;
+      const originalInvestmentInAssetCurrency = (asset.purchasePrice ?? 0) * sale.amount;
       // Her ikisini de display currency'ye çevir
       const saleValue = convertCurrency(
         saleValueInSaleCurrency, 
@@ -95,7 +93,7 @@ export const calculateAssetValue = (
   displayCurrency: Currency, 
   exchangeRate: number
 ): number => {
-  const valueInAssetCurrency = (asset.currentPrice || asset.purchasePrice) * asset.amount;
+  const valueInAssetCurrency = (asset.currentPrice ?? asset.purchasePrice ?? 0) * asset.amount;
   return convertCurrency(valueInAssetCurrency, asset.currency, displayCurrency, exchangeRate);
 };
 
@@ -104,8 +102,8 @@ export const calculateAssetGainLoss = (
   displayCurrency: Currency, 
   exchangeRate: number
 ): { amount: number; percentage: number } => {
-  const currentValueInAssetCurrency = (asset.currentPrice || asset.purchasePrice) * asset.amount;
-  const originalValueInAssetCurrency = asset.purchasePrice * asset.amount;
+  const currentValueInAssetCurrency = (asset.currentPrice ?? asset.purchasePrice ?? 0) * asset.amount;
+  const originalValueInAssetCurrency = (asset.purchasePrice ?? 0) * asset.amount;
   
   const currentValue = convertCurrency(
     currentValueInAssetCurrency, 
@@ -210,9 +208,9 @@ export const calculateTotalSalesProfit = (
   displayCurrency: Currency, 
   exchangeRate: number
 ): number => {
-  return portfolio.sales.reduce((total, sale) => {
-    const asset = portfolio.assets.find(a => a.id === sale.assetId);
-    if (asset) {
+  return portfolio.sales?.reduce((total, sale) => {
+    const asset = portfolio.assets?.find(a => a.id === sale.assetId);
+    if (asset?.purchasePrice && sale?.salePrice) {
       const saleValueInSaleCurrency = sale.salePrice * sale.amount;
       const originalValueInAssetCurrency = asset.purchasePrice * sale.amount;
       
@@ -232,5 +230,5 @@ export const calculateTotalSalesProfit = (
       return total + (saleValue - originalValue);
     }
     return total;
-  }, 0);
+  }, 0) || 0;
 }; 

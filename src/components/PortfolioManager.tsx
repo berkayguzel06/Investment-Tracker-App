@@ -24,11 +24,11 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
   const [newPortfolioName, setNewPortfolioName] = useState('');
   const [newPortfolioDescription, setNewPortfolioDescription] = useState('');
 
-  const handleCreatePortfolio = (e: React.FormEvent) => {
+  const handleCreatePortfolio = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPortfolioName.trim()) {
       const portfolio = createPortfolio(newPortfolioName.trim(), newPortfolioDescription.trim());
-      onCreatePortfolio(portfolio);
+      onCreatePortfolio(await portfolio);
       setNewPortfolioName('');
       setNewPortfolioDescription('');
       setShowCreateForm(false);
@@ -174,9 +174,9 @@ const PortfolioManager: React.FC<PortfolioManagerProps> = ({
                   )}
                   
                   <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
-                    <span>📅 {new Date(portfolio.createdAt).toLocaleDateString('tr-TR')}</span>
-                    <span>💎 {portfolio.assets.length} varlık</span>
-                    <span>💰 {portfolio.sales.length} satış</span>
+                    <span>📅 {new Date(portfolio.createdAt || '').toLocaleDateString('tr-TR')}</span>
+                    <span>💎 {portfolio.assets?.length || 0} varlık</span>
+                    <span>💰 {portfolio.sales?.length || 0} satış</span>
                   </div>
                 </div>
                 
