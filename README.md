@@ -1,6 +1,6 @@
 # 💰 Investment Tracker App
 
-A modern and user friendly investment portfolio tracking application. Developed using Electron and React technologies.
+An investment portfolio tracking application. Developed using Electron and React technologies.
 
 ## 🚀 Features
 
